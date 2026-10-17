@@ -1,0 +1,15 @@
+# Wird von XcodeGen aus project.yml erzeugt
+*.xcodeproj/
+Support/Info.plist
+
+# Build-Ausgaben
+build/
+DerivedData/
+Payload/
+*.ipa
+build.log
+
+# macOS / Xcode
+.DS_Store
+xcuserdata/
+*.xcuserstate

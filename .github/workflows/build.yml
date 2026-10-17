@@ -1,0 +1,58 @@
+name: Build
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Xcode-Version
+        run: xcodebuild -version
+
+      - name: Tools installieren
+        run: brew install xcodegen xcbeautify
+
+      - name: Projekt erzeugen
+        run: xcodegen generate
+
+      - name: Bauen
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Violet.xcodeproj \
+            -scheme Violet \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee build.log | xcbeautify --renderer github-actions
+
+      - name: IPA packen
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Violet.app Payload/
+          zip -qry Violet.ipa Payload
+
+      - name: IPA hochladen
+        uses: actions/upload-artifact@v5
+        with:
+          name: Violet-ipa
+          path: Violet.ipa
+          if-no-files-found: error
+
+      - name: Build-Log hochladen
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
